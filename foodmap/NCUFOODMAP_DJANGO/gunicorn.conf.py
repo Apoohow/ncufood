@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 
 # 工作進程數
 workers = 1  # 在免費方案中使用單個工作進程
@@ -6,7 +7,8 @@ worker_class = 'gthread'  # 使用 gthread 工作進程
 threads = 4  # 每個工作進程的線程數
 
 # 綁定設定
-bind = "0.0.0.0:10000"  # 明確指定綁定地址和端口
+port = os.getenv('PORT', '8000')
+bind = f"0.0.0.0:{port}"  # 使用環境變數中的端口
 
 # 超時設定
 timeout = 120  # 增加超時時間
@@ -31,4 +33,8 @@ limit_request_field_size = 8190
 
 # 工作進程設定
 preload_app = True  # 預加載應用
-worker_tmp_dir = '/dev/shm'  # 使用記憶體存儲臨時文件 
+worker_tmp_dir = '/dev/shm'  # 使用記憶體存儲臨時文件
+
+# 調試設定
+spew = False
+check_config = True 
