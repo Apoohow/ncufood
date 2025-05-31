@@ -1,0 +1,848 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NCU 食物地圖{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 自訂 CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .user-menu {
+            min-width: 200px;
+        }
+        
+        /* Sticky Footer CSS */
+        html, body {
+            height: 100%;
+        }
+        
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        footer {
+            margin-top: auto;
+        }
+
+        /* 在手機版隱藏搜尋欄和使用者選單 */
+        @media (max-width: 991.98px) {
+            .navbar .search-container,
+            .navbar .user-container {
+                display: none !important;
+            }
+        }
+
+        /* 回到頂部按鈕樣式 */
+        #back-to-top {
+            position: fixed;
+            bottom: 5vh;
+            right: 2vw;
+            display: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+
+        #back-to-top:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* AI助手聊天界面樣式 */
+        #ai-assistant {
+            position: fixed;
+            bottom: 80px;
+            right: 6vw;
+            width: 350px;
+            height: 400px;
+            min-width: 300px;
+            min-height: 300px;
+            max-width: 800px;
+            max-height: 80vh;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 2100;
+            resize: none;
+            overflow: hidden;
+        }
+
+        #ai-assistant .chat-header {
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #ai-assistant .chat-header .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        #ai-assistant .chat-header .close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #ai-assistant .chat-description {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+        }
+
+        #ai-assistant .chat-body {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            height: calc(100% - 120px);
+        }
+
+        #ai-assistant .chat-input {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+
+        #ai-assistant .chat-input input {
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        #ai-assistant .chat-input input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            outline: none;
+        }
+
+        #ai-assistant .chat-input button {
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        #ai-assistant .chat-input button:hover {
+            transform: scale(1.05);
+        }
+
+        #ai-assistant .message {
+            margin-bottom: 15px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.5;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        #ai-assistant .user-message {
+            background: #007bff;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 18px 18px 0 18px;
+            margin-left: auto;
+            margin-right: 15px;
+            display: inline-block;
+            text-align: left;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        #ai-assistant .assistant-message {
+            background: #f1f1f1;
+            padding: 12px 18px;
+            border-radius: 18px 18px 18px 0;
+            margin-left: 15px;
+            margin-right: auto;
+            display: inline-block;
+            color: #333;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        #ai-assistant .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+
+        #ai-assistant .user-message-wrapper {
+            align-items: flex-end;
+            margin-left: auto;
+        }
+
+        #ai-assistant .assistant-message-wrapper {
+            align-items: flex-start;
+        }
+
+        #ai-assistant .message-time {
+            font-size: 0.75rem;
+            color: rgba(0,0,0,0.4);
+            margin-top: 4px;
+            text-align: right;
+            padding: 0 2px;
+        }
+
+        #ai-assistant .user-message .message-time {
+            color: rgba(255,255,255,0.7);
+        }
+
+        #chat-toggle {
+            position: fixed;
+            bottom: 15vh;
+            right: 2vw;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transition: background-color 0.3s;
+        }
+
+        #chat-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* 添加左下角調整手柄 */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            cursor: sw-resize;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .resize-handle::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-left: 2px solid #007bff;
+            border-bottom: 2px solid #007bff;
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+        }
+
+        .resize-handle::after {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-left: 2px solid #007bff;
+            border-bottom: 2px solid #007bff;
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+        }
+
+        .resize-handle:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="h-100">
+    <div class="page-wrapper">
+        <!-- 導航欄 -->
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <img src="{% static 'images/logo.png' %}" alt="NCU 食物地圖 Logo" style="height: 56px; width: auto; margin-right: 8px;">NCU 食物地圖
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">首頁</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'restaurant_list' %}">餐廳列表</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'checkin_list' %}">打卡</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'article_list' %}">文章留言板</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="rankingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">排行榜</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'user_ranking' %}">用戶排行</a></li>
+                                <li><a class="dropdown-item" href="{% url 'restaurant_ranking' %}">店家排行</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                食物分析
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% if user.is_authenticated %}
+                                <li><a class="dropdown-item" href="{% url 'personal_food_diary' %}"><i class="fas fa-book me-2"></i>我的飲食日記</a></li>
+                                <li><a class="dropdown-item" href="{% url 'personal_nutrition_dashboard' %}"><i class="fas fa-chart-line me-2"></i>個人營養分析</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{% url 'ai_food_analysis' %}"><i class="fas fa-brain me-2"></i>AI食物分析</a></li>
+                                <li><a class="dropdown-item" href="{% url 'ai_advisor' %}"><i class="fas fa-robot me-2"></i>智能營養顧問</a></li>
+                            </ul>
+                        </li>
+                        {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="socialDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-users me-1"></i>社交功能
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'social:feed' %}">
+                                    <i class="fas fa-home me-2"></i>動態首頁
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:friends' %}">
+                                    <i class="fas fa-user-friends me-2"></i>我的好友
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:chat_list' %}">
+                                    <i class="fas fa-comments me-2"></i>聊天室
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:groups' %}">
+                                    <i class="fas fa-users-cog me-2"></i>飲食群組
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:profile' %}">
+                                    <i class="fas fa-user-circle me-2"></i>個人資料
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:notifications' %}">
+                                    <i class="fas fa-bell me-2"></i>通知
+                                </a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'ai_recommendation:index' %}">AI 推薦</a>
+                        </li>
+                    </ul>
+                    <form class="d-flex me-2 search-container" action="{% url 'restaurant_list' %}" method="get">
+                        <div class="input-group">
+                            <input class="form-control" type="search" placeholder="搜尋餐廳" name="name_or_address">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 用戶登入/註冊區域 -->
+                    <div class="user-container">
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <img src="{% if user.socialaccount_set.all.0.get_avatar_url %}{{ user.socialaccount_set.all.0.get_avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=random{% endif %}" 
+                                 alt="{{ user.username }}" 
+                                 class="user-avatar" 
+                                 data-bs-toggle="dropdown" 
+                                 aria-expanded="false">
+                            <ul class="dropdown-menu dropdown-menu-end user-menu">
+                                <li class="dropdown-item-text">
+                                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-user me-2"></i>個人資料</a></li>
+                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-history me-2"></i>收藏餐廳</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'googleOauth:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>登出</a></li>
+                                <li>
+                                    <a href="{% url 'delete_account' %}" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash-alt me-2"></i>刪除帳戶
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'googleOauth:login' %}" class="btn btn-outline-light">登入/註冊</a>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- 頁面內容 -->
+            <main class="container py-4">
+                {% if messages %}
+                    <div class="row">
+                        <div class="col-12">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- 頁腳 -->
+        <footer class="text-light py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>關於 NCU 食物地圖</h5>
+                        <p>NCU 食物地圖是一個為中央大學師生提供餐廳信息和食物營養分析的平台。</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>快速連結</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'home' %}" class="text-light">首頁</a></li>
+                            <li><a href="{% url 'restaurant_list' %}" class="text-light">餐廳列表</a></li>
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'personal_food_diary' %}" class="text-light">我的飲食日記</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'ai_advisor' %}" class="text-light">智能營養顧問</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>聯絡我們</h5>
+                        <address>
+                            <p><i class="fas fa-map-marker-alt me-2"></i>桃園市中壢區中大路300號</p>
+                            <p><i class="fas fa-envelope me-2"></i><a href="mailto:contact@ncufoodmap.com" class="text-light">contact@ncufoodmap.com</a></p>
+                        </address>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p>&copy; {% now "Y" %} NCU 食物地圖。保留所有權利。</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 回到頂部按鈕 -->
+    <div id="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <!-- AI助手聊天按鈕 -->
+    <button id="chat-toggle" type="button" onclick="toggleChat()">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- AI助手聊天界面 -->
+    <div id="ai-assistant">
+        <div class="chat-header">
+            <span><i class="fas fa-robot me-2"></i>AI 助手</span>
+            <button class="close-btn" onclick="toggleChat()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="chat-description">
+            您好！我是 NCU 食物地圖的 AI 助手。您可以詢問我每個頁面負責的角色或者其他相關的問題喔！
+        </div>
+        <div class="chat-body" id="chat-messages">
+        </div>
+        <div class="chat-input">
+            <input type="text" class="form-control" id="chat-input" placeholder="輸入您的問題...">
+            <button class="btn btn-primary" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="resize-handle"></div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <!-- jQuery (需要在Bootstrap之前載入) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自訂 JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        // 回到頂部按鈕功能
+        document.addEventListener('DOMContentLoaded', function() {
+            var backToTop = document.getElementById('back-to-top');
+            
+            // 當頁面滾動時顯示/隱藏按鈕
+            window.onscroll = function() {
+                if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+                    backToTop.style.display = 'block';
+                } else {
+                    backToTop.style.display = 'none';
+                }
+            };
+            
+            // 點擊按鈕時滾動到頂部
+            backToTop.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // AI助手相關功能
+        function toggleChat() {
+            const assistant = document.getElementById('ai-assistant');
+            if (assistant.style.display === 'none' || assistant.style.display === '') {
+                assistant.style.display = 'flex';
+                loadChatHistory();  // 打開聊天窗口時加載歷史記錄
+            } else {
+                assistant.style.display = 'none';
+            }
+        }
+
+        // 加載聊天歷史記錄
+        async function loadChatHistory() {
+            const chatMessages = document.getElementById('chat-messages');
+            
+            try {
+                const response = await fetch('/ai_assistant/history/');
+                const data = await response.json();
+                
+                if (data.messages && data.messages.length > 0) {
+                    // 清空當前消息
+                    chatMessages.innerHTML = '';
+                    
+                    // 添加歷史消息
+                    data.messages.forEach(message => {
+                        const messageClass = message.type === 'user' ? 'user-message' : 'assistant-message';
+                        chatMessages.innerHTML += `
+                            <div class="message ${messageClass}">
+                                ${message.content}
+                            </div>
+                        `;
+                    });
+                } else {
+                    // 如果沒有歷史記錄，顯示歡迎消息
+                    chatMessages.innerHTML = `
+                        <div class="message assistant-message">
+                            您好！我是 NCU 食物地圖的 AI 助手。有什麼我可以幫您的嗎？
+                        </div>
+                    `;
+                }
+                
+                // 滾動到最新消息
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                // 如果加載失敗，顯示錯誤消息
+                chatMessages.innerHTML = `
+                    <div class="message assistant-message">
+                        您好！我是 NCU 食物地圖的 AI 助手。有什麼我可以幫您的嗎？
+                    </div>
+                `;
+            }
+        }
+
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // 清空輸入框
+            input.value = '';
+
+            const chatMessages = document.getElementById('chat-messages');
+            
+            // 檢查當前消息數量
+            const currentMessages = chatMessages.getElementsByClassName('message');
+            if (currentMessages.length >= 10) {
+                chatMessages.removeChild(currentMessages[0]);
+                chatMessages.removeChild(currentMessages[0]);
+            }
+
+            // 獲取當前時間
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-TW', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            // 添加用戶消息
+            chatMessages.innerHTML += `
+                <div class="message-wrapper user-message-wrapper">
+                    <div class="message user-message">
+                        <div class="message-content">${message}</div>
+                        <div class="message-time">${timeString}</div>
+                    </div>
+                </div>
+            `;
+
+            // 添加載入中提示
+            const loadingId = 'loading-' + Date.now();
+            chatMessages.innerHTML += `
+                <div class="message-wrapper assistant-message-wrapper">
+                    <div class="message assistant-message" id="${loadingId}">
+                        <div class="message-content">
+                            <i class="fas fa-spinner fa-spin"></i> 思考中...
+                        </div>
+                        <div class="message-time">${timeString}</div>
+                    </div>
+                </div>
+            `;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                // 獲取當前頁面名稱
+                const currentPath = window.location.pathname;
+                let currentPage = 'home';
+                
+                // 餐廳相關頁面
+                if (currentPath.includes('restaurants/')) {
+                    currentPage = 'restaurant_list';
+                } else if (currentPath.includes('restaurant/')) {
+                    currentPage = 'restaurant_detail';
+                } else if (currentPath.includes('menu-items/')) {
+                    currentPage = 'menu_item_detail';
+                } else if (currentPath.includes('map/')) {
+                    currentPage = 'map';
+                }
+                
+                // 打卡相關頁面
+                else if (currentPath.includes('checkin/')) {
+                    if (currentPath.includes('ranking/')) {
+                        currentPage = 'checkin_ranking';
+                    } else if (currentPath.includes('user_ranking/')) {
+                        currentPage = 'user_ranking';
+                    } else if (currentPath.includes('restaurant_ranking/')) {
+                        currentPage = 'restaurant_ranking';
+                    } else if (currentPath.includes('my_points/')) {
+                        currentPage = 'my_points';
+                    } else {
+                        currentPage = 'checkin';
+                    }
+                }
+                
+                // 文章相關頁面
+                else if (currentPath.includes('article/')) {
+                    if (currentPath.includes('create/')) {
+                        currentPage = 'article_create';
+                    } else if (currentPath.includes('edit/')) {
+                        currentPage = 'article_edit';
+                    } else if (currentPath.includes('comment/')) {
+                        currentPage = 'article_comment';
+                    } else {
+                        currentPage = 'article';
+                    }
+                }
+                
+                // 食物分析相關頁面
+                else if (currentPath.includes('food_analysis/')) {
+                    if (currentPath.includes('preferences/')) {
+                        currentPage = 'dietary_preferences';
+                    } else if (currentPath.includes('allergens/')) {
+                        currentPage = 'allergen_info';
+                    } else if (currentPath.includes('ingredients/')) {
+                        currentPage = 'ingredient_analysis';
+                    } else if (currentPath.includes('ai-advisor/')) {
+                        currentPage = 'ai_advisor';
+                    } else if (currentPath.includes('ai-food-analysis/')) {
+                        currentPage = 'ai_food_analysis';
+                    } else {
+                        currentPage = 'nutrition_dashboard';
+                    }
+                }
+                
+                // AI推薦相關頁面
+                else if (currentPath.includes('ai_recommendation/')) {
+                    currentPage = 'ai_recommendation';
+                }
+                
+                // 使用者相關頁面
+                else if (currentPath.includes('accounts/')) {
+                    currentPage = 'account';
+                } else if (currentPath.includes('auth/')) {
+                    currentPage = 'auth';
+                } else if (currentPath.includes('delete-account/')) {
+                    currentPage = 'delete_account';
+                }
+
+                // 發送請求到後端
+                const response = await fetch('/ai_assistant/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        current_page: currentPage
+                    })
+                });
+
+                const data = await response.json();
+                
+                // 移除載入中提示
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+
+                // 添加AI回應
+                if (data.response) {
+                    chatMessages.innerHTML += `
+                        <div class="message-wrapper assistant-message-wrapper">
+                            <div class="message assistant-message">
+                                <div class="message-content">${data.response}</div>
+                                <div class="message-time">${timeString}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('No response from AI');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // 移除載入中提示
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                // 只在發生錯誤時顯示錯誤消息
+                chatMessages.innerHTML += `
+                    <div class="message-wrapper assistant-message-wrapper">
+                        <div class="message assistant-message text-danger">
+                            <div class="message-content">抱歉，發生了一些錯誤。請稍後再試。</div>
+                            <div class="message-time">${timeString}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 修改拖曳調整大小的功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const assistant = document.getElementById('ai-assistant');
+            const handle = assistant.querySelector('.resize-handle');
+            let isResizing = false;
+            let originalWidth;
+            let originalHeight;
+            let originalX;
+            let originalY;
+
+            handle.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                originalWidth = assistant.offsetWidth;
+                originalHeight = assistant.offsetHeight;
+                originalX = e.clientX;
+                originalY = e.clientY;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+
+                // 計算新的寬度和高度
+                const width = originalWidth - (e.clientX - originalX);
+                const height = originalHeight + (e.clientY - originalY);
+
+                // 限制最小和最大尺寸
+                const minWidth = 300;
+                const minHeight = 300;
+                const maxWidth = 800;
+                const maxHeight = window.innerHeight * 0.8;
+
+                // 調整寬度，但保持右側位置固定
+                if (width >= minWidth && width <= maxWidth) {
+                    assistant.style.width = width + 'px';
+                    // 不需要調整 right 值，因為已經在 CSS 中固定為 6vw
+                }
+
+                // 調整高度
+                if (height >= minHeight && height <= maxHeight) {
+                    assistant.style.height = height + 'px';
+                }
+
+                e.preventDefault();
+            });
+
+            document.addEventListener('mouseup', function() {
+                isResizing = false;
+            });
+
+            // 在視窗大小改變時調整最大高度
+            window.addEventListener('resize', function() {
+                const maxHeight = window.innerHeight * 0.8;
+                if (assistant.offsetHeight > maxHeight) {
+                    assistant.style.height = maxHeight + 'px';
+                }
+                // 不需要調整 right 值，因為使用 vw 單位會自動響應視窗大小變化
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

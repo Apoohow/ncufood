@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ room }} - 聊天室{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .chat-header {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .message.own {
+        flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin: 0 10px;
+        flex-shrink: 0;
+    }
+    
+    .message-content {
+        max-width: 70%;
+        background: white;
+        padding: 12px 16px;
+        border-radius: 18px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    
+    .message.own .message-content {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .message-sender {
+        font-weight: bold;
+        font-size: 0.85em;
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+    
+    .message.own .message-sender {
+        color: rgba(255,255,255,0.8);
+    }
+    
+    .message-time {
+        font-size: 0.75em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .message.own .message-time {
+        color: rgba(255,255,255,0.7);
+    }
+    
+    .chat-input {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .input-group {
+        border-radius: 25px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .form-control {
+        border: none;
+        padding: 12px 20px;
+        resize: none;
+    }
+    
+    .form-control:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .btn-send {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-send:hover {
+        background: linear-gradient(45deg, #5a6fd8, #6a4c93);
+        color: white;
+    }
+    
+    .participants-list {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .participant-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .participant-item:last-child {
+        border-bottom: none;
+    }
+    
+    .participant-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    .message-image {
+        max-width: 200px;
+        border-radius: 10px;
+        margin-top: 5px;
+    }
+    
+    .message-file {
+        background: rgba(0,0,0,0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-top: 5px;
+        display: inline-block;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 10px;
+        font-style: italic;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- 聊天區域 -->
+        <div class="col-lg-9">
+            <div class="chat-container">
+                <!-- 聊天室標題 -->
+                <div class="chat-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">
+                                {% if room.room_type == 'private' %}
+                                    <i class="fas fa-user me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-users me-2"></i>
+                                {% endif %}
+                                {{ room }}
+                            </h5>
+                            <small class="opacity-75">{{ participants.count }} 位成員</small>
+                        </div>
+                        <a href="{% url 'social:chat_list' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 訊息區域 -->
+                <div class="chat-messages" id="chatMessages">
+                    {% for message in messages %}
+                        <div class="message {% if message.sender == request.user %}own{% endif %}">
+                            {% if message.sender != request.user %}
+                                <div class="message-avatar">
+                                    {{ message.sender.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="message-content">
+                                {% if message.sender != request.user %}
+                                    <div class="message-sender">{{ message.sender.username }}</div>
+                                {% endif %}
+                                
+                                {% if message.content %}
+                                    <div>{{ message.content|linebreaks }}</div>
+                                {% endif %}
+                                
+                                {% if message.image %}
+                                    <img src="{{ message.image.url }}" alt="圖片" class="message-image">
+                                {% endif %}
+                                
+                                {% if message.file %}
+                                    <div class="message-file">
+                                        <i class="fas fa-file me-1"></i>
+                                        <a href="{{ message.file.url }}" target="_blank" class="text-decoration-none">
+                                            {{ message.file.name|slice:"10:" }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="message-time">
+                                    {{ message.created_at|date:"H:i" }}
+                                </div>
+                            </div>
+                            {% if message.sender == request.user %}
+                                <div class="message-avatar">
+                                    {{ message.sender.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-comments fa-3x mb-3"></i>
+                            <h5>還沒有訊息</h5>
+                            <p>開始聊天吧！</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 正在輸入指示器 -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <i class="fas fa-ellipsis-h"></i> 正在輸入...
+                </div>
+                
+                <!-- 輸入區域 -->
+                <div class="chat-input">
+                    <form method="post" enctype="multipart/form-data" id="messageForm">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            {{ form.content }}
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#fileModal">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <button type="submit" class="btn btn-send">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 側邊欄 - 參與者列表 -->
+        <div class="col-lg-3">
+            <div class="participants-list">
+                <h6 class="mb-3">
+                    <i class="fas fa-users me-2"></i>參與者 ({{ participants.count }})
+                </h6>
+                {% for participant in participants %}
+                    <div class="participant-item">
+                        <div class="participant-avatar">
+                            {{ participant.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ participant.username }}</div>
+                            {% if participant == room.created_by %}
+                                <small class="text-muted">創建者</small>
+                            {% endif %}
+                        </div>
+                        {% if participant != request.user %}
+                            <div class="ms-auto">
+                                <a href="{% url 'social:start_private_chat' participant.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-comment"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 檔案上傳模態框 -->
+<div class="modal fade" id="fileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-paperclip me-2"></i>上傳檔案
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" id="fileForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">上傳圖片</label>
+                        {{ form.image }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">上傳檔案</label>
+                        {{ form.file }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="file_message" class="form-label">附加訊息（可選）</label>
+                        <textarea class="form-control" id="file_message" name="content" rows="2" placeholder="說點什麼..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>上傳
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    const chatMessages = $('#chatMessages');
+    const messageForm = $('#messageForm');
+    const fileForm = $('#fileForm');
+    const messageInput = $('#id_content');
+    let lastMessageId = {% if messages.last %}{{ messages.last.id }}{% else %}0{% endif %};
+    
+    // 滾動到底部
+    function scrollToBottom() {
+        chatMessages.scrollTop(chatMessages[0].scrollHeight);
+    }
+    
+    // 初始滾動到底部
+    scrollToBottom();
+    
+    // 發送訊息
+    messageForm.on('submit', function(e) {
+        e.preventDefault();
+        
+        const content = messageInput.val().trim();
+        if (!content) return;
+        
+        $.ajax({
+            url: '{% url "social:chat_room" room.id %}',
+            method: 'POST',
+            data: $(this).serialize(),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    messageInput.val('');
+                    addMessage(response.message);
+                    scrollToBottom();
+                }
+            },
+            error: function() {
+                alert('發送失敗，請重試');
+            }
+        });
+    });
+    
+    // 檔案上傳
+    fileForm.on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: '{% url "social:chat_room" room.id %}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#fileModal').modal('hide');
+                fileForm[0].reset();
+                location.reload(); // 重新載入頁面以顯示檔案
+            },
+            error: function() {
+                alert('上傳失敗，請重試');
+            }
+        });
+    });
+    
+    // 添加訊息到聊天區域
+    function addMessage(message) {
+        const messageHtml = '<div class="message own">' +
+            '<div class="message-content">' +
+            '<div>' + message.content + '</div>' +
+            '<div class="message-time">' + message.created_at + '</div>' +
+            '</div>' +
+            '<div class="message-avatar">' +
+            message.sender.charAt(0).toUpperCase() +
+            '</div>' +
+            '</div>';
+        chatMessages.append(messageHtml);
+        lastMessageId = message.id;
+    }
+    
+    // 定期檢查新訊息
+    function checkNewMessages() {
+        $.ajax({
+            url: '{% url "social:get_chat_messages" room.id %}',
+            method: 'GET',
+            data: { last_id: lastMessageId },
+            success: function(response) {
+                response.messages.forEach(function(message) {
+                    if (!message.is_own) {
+                        const messageHtml = '<div class="message">' +
+                            '<div class="message-avatar">' +
+                            message.sender.charAt(0).toUpperCase() +
+                            '</div>' +
+                            '<div class="message-content">' +
+                            '<div class="message-sender">' + message.sender + '</div>' +
+                            '<div>' + message.content + '</div>' +
+                            '<div class="message-time">' + message.created_at + '</div>' +
+                            '</div>' +
+                            '</div>';
+                        chatMessages.append(messageHtml);
+                        scrollToBottom();
+                    }
+                    lastMessageId = Math.max(lastMessageId, message.id);
+                });
+            }
+        });
+    }
+    
+    // 每3秒檢查一次新訊息
+    setInterval(checkNewMessages, 3000);
+    
+    // Enter鍵發送訊息
+    messageInput.on('keypress', function(e) {
+        if (e.which === 13 && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.submit();
+        }
+    });
+});
+</script>
+{% endblock %} 
