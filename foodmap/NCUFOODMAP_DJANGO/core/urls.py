@@ -16,10 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('', include('googleOauth.urls')),
     path('', include('restaurants.urls')),
-]
+    path('checkin/', include(('checkin.urls', 'checkin'), namespace='checkin')),
+    path('article/', include(('article.urls', 'article'), namespace='article')),
+    path('social/', include(('social.urls', 'social'), namespace='social')),
+    path('food-analysis/', include(('food_analysis.urls', 'food_analysis'), namespace='food_analysis')),
+    path('ai-assistant/', include(('ai_assistant.urls', 'ai_assistant'), namespace='ai_assistant')),
+    path('ai-recommendation/', include(('ai_recommendation.urls', 'ai_recommendation'), namespace='ai_recommendation')),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

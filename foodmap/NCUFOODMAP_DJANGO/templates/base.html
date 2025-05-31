@@ -104,16 +104,16 @@
                             <a class="nav-link" href="{% url 'restaurant_list' %}">餐廳列表</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'checkin_list' %}">打卡</a>
+                            <a class="nav-link" href="{% url 'checkin:checkin_list' %}">打卡</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'article_list' %}">文章留言板</a>
+                            <a class="nav-link" href="{% url 'article:article_list' %}">文章留言板</a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="rankingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">排行榜</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{% url 'user_ranking' %}">用戶排行</a></li>
-                                <li><a class="dropdown-item" href="{% url 'restaurant_ranking' %}">店家排行</a></li>
+                                <li><a class="dropdown-item" href="{% url 'checkin:user_ranking' %}">用戶排行</a></li>
+                                <li><a class="dropdown-item" href="{% url 'checkin:restaurant_ranking' %}">店家排行</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">
@@ -122,12 +122,12 @@
                             </a>
                             <ul class="dropdown-menu">
                                 {% if user.is_authenticated %}
-                                <li><a class="dropdown-item" href="{% url 'personal_food_diary' %}"><i class="fas fa-book me-2"></i>我的飲食日記</a></li>
-                                <li><a class="dropdown-item" href="{% url 'personal_nutrition_dashboard' %}"><i class="fas fa-chart-line me-2"></i>個人營養分析</a></li>
+                                <li><a class="dropdown-item" href="{% url 'food_analysis:personal_food_diary' %}"><i class="fas fa-book me-2"></i>我的飲食日記</a></li>
+                                <li><a class="dropdown-item" href="{% url 'food_analysis:personal_nutrition_dashboard' %}"><i class="fas fa-chart-line me-2"></i>個人營養分析</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 {% endif %}
-                                <li><a class="dropdown-item" href="{% url 'ai_food_analysis' %}"><i class="fas fa-brain me-2"></i>AI食物分析</a></li>
-                                <li><a class="dropdown-item" href="{% url 'ai_nutrition_consultant' %}"><i class="fas fa-user-md me-2"></i>AI營養顧問</a></li>
+                                <li><a class="dropdown-item" href="{% url 'food_analysis:ai_food_analysis' %}"><i class="fas fa-brain me-2"></i>AI食物分析</a></li>
+                                <li><a class="dropdown-item" href="{% url 'food_analysis:ai_nutrition_consultant' %}"><i class="fas fa-user-md me-2"></i>AI營養顧問</a></li>
                             </ul>
                         </li>
                         {% if user.is_authenticated %}
@@ -223,7 +223,7 @@
                             <li><a href="{% url 'googleOauth:home' %}" class="text-light">首頁</a></li>
                             <li><a href="{% url 'restaurant_list' %}" class="text-light">餐廳列表</a></li>
                             {% if user.is_authenticated %}
-                            <li><a href="{% url 'personal_food_diary' %}" class="text-light">我的飲食日記</a></li>
+                            <li><a href="{% url 'food_analysis:personal_food_diary' %}" class="text-light">我的飲食日記</a></li>
                             {% endif %}
                         </ul>
                     </div>

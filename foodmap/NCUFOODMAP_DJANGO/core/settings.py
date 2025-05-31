@@ -40,14 +40,28 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'googleOauth',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'rest_framework',
+    'corsheaders',
+    # 自定義應用
+    'googleOauth',
     'restaurants',
+    'checkin',
+    'article',
+    'social',
+    'food_analysis',
+    'ai_assistant',
+    'ai_recommendation',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
