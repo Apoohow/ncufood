@@ -4,6 +4,7 @@ from . import views
 app_name = 'googleOauth'
 
 urlpatterns = [
-    path('', views.home, name='login'),
-    path('logout/', views.logout_view, name='logout')
+    path('', views.home, name='home'),  # 主頁
+    path('login/', views.home, name='login'),  # 登入頁面
+    path('logout/', views.logout_view, name='logout')  # 登出
 ]

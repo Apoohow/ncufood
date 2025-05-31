@@ -89,7 +89,7 @@
         <!-- 導航欄 -->
         <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
             <div class="container">
-                <a class="navbar-brand" href="{% url 'home' %}">
+                <a class="navbar-brand" href="{% url 'googleOauth:home' %}">
                     <img src="{% static 'images/logo.png' %}" alt="NCU 食物地圖 Logo" style="height: 56px; width: auto; margin-right: 8px;">NCU 食物地圖
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -98,7 +98,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'home' %}">首頁</a>
+                            <a class="nav-link" href="{% url 'googleOauth:home' %}">首頁</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'restaurant_list' %}">餐廳列表</a>
@@ -173,8 +173,8 @@
                                     <small class="text-muted">{{ user.email }}</small>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-user me-2"></i>個人資料</a></li>
-                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-history me-2"></i>收藏餐廳</a></li>
+                                <li><a class="dropdown-item" href="{% url 'googleOauth:home' %}"><i class="fas fa-user me-2"></i>個人資料</a></li>
+                                <li><a class="dropdown-item" href="{% url 'googleOauth:home' %}"><i class="fas fa-history me-2"></i>收藏餐廳</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'googleOauth:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>登出</a></li>
                                 <li>
@@ -220,7 +220,7 @@
                     <div class="col-md-4">
                         <h5>快速連結</h5>
                         <ul class="list-unstyled">
-                            <li><a href="{% url 'home' %}" class="text-light">首頁</a></li>
+                            <li><a href="{% url 'googleOauth:home' %}" class="text-light">首頁</a></li>
                             <li><a href="{% url 'restaurant_list' %}" class="text-light">餐廳列表</a></li>
                             {% if user.is_authenticated %}
                             <li><a href="{% url 'personal_food_diary' %}" class="text-light">我的飲食日記</a></li>
