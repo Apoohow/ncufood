@@ -6,7 +6,7 @@ services:
     region: oregon
     rootDirectory: foodmap/NCUFOODMAP_DJANGO
     buildCommand: pip install -r requirements.txt ; python manage.py collectstatic --noinput ; python manage.py migrate
-    startCommand: gunicorn core.wsgi:application
+    startCommand: gunicorn core.wsgi:application --config gunicorn.conf.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -25,6 +25,8 @@ services:
       - key: GOOGLE_OAUTH_SECRET
         value: "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"
       - key: SITE_ID
+        value: "1"
+      - key: WEB_CONCURRENCY
         value: "1"
     healthCheckPath: /healthz
     autoDeploy: true
