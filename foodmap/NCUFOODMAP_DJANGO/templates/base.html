@@ -1,0 +1,288 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}NCU 食物地圖{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 自訂 CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .user-menu {
+            min-width: 200px;
+        }
+        
+        /* Sticky Footer CSS */
+        html, body {
+            height: 100%;
+        }
+        
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        footer {
+            margin-top: auto;
+        }
+
+        /* 在手機版隱藏搜尋欄和使用者選單 */
+        @media (max-width: 991.98px) {
+            .navbar .search-container,
+            .navbar .user-container {
+                display: none !important;
+            }
+        }
+
+        /* 回到頂部按鈕樣式 */
+        #back-to-top {
+            position: fixed;
+            bottom: 5vh;
+            right: 2vw;
+            display: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+
+        #back-to-top:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* 移除舊AI助手樣式 */
+        /* 原本的 #ai-assistant, #chat-toggle 等樣式已刪除 */
+    </style>
+</head>
+<body class="h-100">
+    <div class="page-wrapper">
+        <!-- 導航欄 -->
+        <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <img src="{% static 'images/logo.png' %}" alt="NCU 食物地圖 Logo" style="height: 56px; width: auto; margin-right: 8px;">NCU 食物地圖
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">首頁</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'restaurant_list' %}">餐廳列表</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'checkin_list' %}">打卡</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'article_list' %}">文章留言板</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="rankingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">排行榜</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'user_ranking' %}">用戶排行</a></li>
+                                <li><a class="dropdown-item" href="{% url 'restaurant_ranking' %}">店家排行</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                食物分析
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% if user.is_authenticated %}
+                                <li><a class="dropdown-item" href="{% url 'personal_food_diary' %}"><i class="fas fa-book me-2"></i>我的飲食日記</a></li>
+                                <li><a class="dropdown-item" href="{% url 'personal_nutrition_dashboard' %}"><i class="fas fa-chart-line me-2"></i>個人營養分析</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{% url 'ai_food_analysis' %}"><i class="fas fa-brain me-2"></i>AI食物分析</a></li>
+                                <li><a class="dropdown-item" href="{% url 'ai_nutrition_consultant' %}"><i class="fas fa-user-md me-2"></i>AI營養顧問</a></li>
+                            </ul>
+                        </li>
+                        {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="socialDropdown" role="button" data-bs-toggle="dropdown">
+                                社交功能
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'social:feed' %}"><i class="fas fa-home me-2"></i>動態首頁</a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:friends' %}"><i class="fas fa-user-friends me-2"></i>我的好友</a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:groups' %}"><i class="fas fa-users me-2"></i>飲食群組</a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:chat_list' %}"><i class="fas fa-comments me-2"></i>聊天</a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:profile' %}"><i class="fas fa-user me-2"></i>個人資料</a></li>
+                                <li><a class="dropdown-item" href="{% url 'social:notifications' %}"><i class="fas fa-bell me-2"></i>通知</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'ai_recommendation:index' %}">AI 推薦</a>
+                        </li>
+                    </ul>
+                    <form class="d-flex me-2 search-container" action="{% url 'restaurant_list' %}" method="get">
+                        <div class="input-group">
+                            <input class="form-control" type="search" placeholder="搜尋餐廳" name="name_or_address">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 用戶登入/註冊區域 -->
+                    <div class="user-container">
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <img src="{% if user.socialaccount_set.all.0.get_avatar_url %}{{ user.socialaccount_set.all.0.get_avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=random{% endif %}" 
+                                 alt="{{ user.username }}" 
+                                 class="user-avatar" 
+                                 data-bs-toggle="dropdown" 
+                                 aria-expanded="false">
+                            <ul class="dropdown-menu dropdown-menu-end user-menu">
+                                <li class="dropdown-item-text">
+                                    <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-user me-2"></i>個人資料</a></li>
+                                <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-history me-2"></i>收藏餐廳</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'googleOauth:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>登出</a></li>
+                                <li>
+                                    <a href="{% url 'delete_account' %}" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash-alt me-2"></i>刪除帳戶
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'googleOauth:login' %}" class="btn btn-outline-light">登入/註冊</a>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- 頁面內容 -->
+            <main class="container py-4">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        <!-- 頁腳 -->
+        <footer class="text-light py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>關於 NCU 食物地圖</h5>
+                        <p>NCU 食物地圖是一個為中央大學師生提供餐廳信息和食物營養分析的平台。</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>快速連結</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url 'home' %}" class="text-light">首頁</a></li>
+                            <li><a href="{% url 'restaurant_list' %}" class="text-light">餐廳列表</a></li>
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'personal_food_diary' %}" class="text-light">我的飲食日記</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>聯絡我們</h5>
+                        <address>
+                            <p><i class="fas fa-map-marker-alt me-2"></i>桃園市中壢區中大路300號</p>
+                            <p><i class="fas fa-envelope me-2"></i><a href="mailto:contact@ncufoodmap.com" class="text-light">contact@ncufoodmap.com</a></p>
+                        </address>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p>&copy; {% now "Y" %} NCU 食物地圖。保留所有權利。</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 回到頂部按鈕 -->
+    <div id="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    {# 移除舊AI助手聊天按鈕與聊天界面 #}
+    {#
+    <button id="chat-toggle" type="button" onclick="toggleChat()">
+        <i class="fas fa-robot"></i>
+    </button>
+    <div id="ai-assistant"> ... </div>
+    #}
+
+    {# 移除舊AI助手相關JS #}
+    {#
+    // AI助手相關功能
+    function toggleChat() { ... }
+    async function loadChatHistory() { ... }
+    document.getElementById('chat-input').addEventListener('keypress', function(e) { ... });
+    async function sendMessage() { ... }
+    #}
+
+    {# 保留新版浮動AI助手 #}
+    {% include 'ai_assistant/assistant_widget.html' %}
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <!-- jQuery (需要在Bootstrap之前載入) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自訂 JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        // 回到頂部按鈕功能
+        document.addEventListener('DOMContentLoaded', function() {
+            var backToTop = document.getElementById('back-to-top');
+            window.onscroll = function() {
+                if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+                    backToTop.style.display = 'block';
+                } else {
+                    backToTop.style.display = 'none';
+                }
+            };
+            backToTop.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

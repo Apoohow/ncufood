@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NCU 食物地圖 - 尋找中央大學周邊最佳餐廳{% endblock %}
+
+{% block extra_css %}
+<style>
+    #mainMap {
+        width: 100%;
+        height: 600px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .bounce-logo {
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-15px);
+        }
+        60% {
+            transform: translateY(-8px);
+        }
+    }
+    
+    .bounce-logo:nth-child(odd) {
+        animation-delay: 0.3s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 英雄區塊 -->
+<section class="hero mb-5">
+    <div class="bg-primary text-white text-center p-5 rounded-3">
+        <h1 class="display-4 fw-bold d-flex align-items-center justify-content-center">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" class="bounce-logo" style="height: 80px; width: auto; margin-right: 20px;">
+            NCU 食物地圖
+            <img src="{% static 'images/logo.png' %}" alt="Logo" class="bounce-logo" style="height: 80px; width: auto; margin-left: 20px;">
+        </h1>
+        <p class="lead">探索中央大學周邊的美食，發現美味與營養的完美結合</p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+            <a href="{% url 'restaurant_list' %}" class="btn btn-light btn-lg px-4 me-sm-3">瀏覽餐廳</a>
+            <a href="{% url 'map' %}" class="btn btn-outline-light btn-lg px-4">查看地圖</a>
+        </div>
+    </div>
+</section>
+
+<!-- 熱門餐廳區塊 -->
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>熱門餐廳</h2>
+        <a href="{% url 'restaurant_list' %}" class="btn btn-outline-primary">查看全部</a>
+    </div>
+    
+    <div class="row">
+        {% for restaurant in top_restaurants %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if restaurant.image %}
+                        <img src="{{ restaurant.image.url }}" class="card-img-top" alt="{{ restaurant.name }}">
+                    {% else %}
+                        <img src="{% static 'img/default-restaurant.jpg' %}" class="card-img-top" alt="{{ restaurant.name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ restaurant.name }}</h5>
+                        <div class="mb-2">
+                            {% for category in restaurant.categories.all %}
+                                <span class="badge bg-secondary">{{ category.name }}</span>
+                            {% endfor %}
+                        </div>
+                        <p class="card-text text-muted">{{ restaurant.address }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="rating">
+                                {% with ''|center:5 as range %}
+                                    {% for _ in range %}
+                                        {% if forloop.counter <= restaurant.avg_rating|default:0|floatformat:"0" %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                                <span class="ms-1">{{ restaurant.avg_rating|default:0|floatformat:1 }}</span>
+                            </div>
+                            <a href="{% url 'restaurant_detail' restaurant.pk %}" class="btn btn-sm btn-primary">查看詳情</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    目前尚無評分資料。請添加餐廳和評論！
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 分類區塊 -->
+<section class="mb-5">
+    <h2 class="mb-4">瀏覽分類</h2>
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-6 col-md-3 col-lg-2 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="{{ category.icon|default:'fas fa-utensils' }} fa-2x mb-3 text-primary"></i>
+                        <h5 class="card-title">{{ category.name }}</h5>
+                        <a href="{% url 'restaurant_list' %}?category={{ category.id }}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    尚未添加任何分類。
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- 功能特點區塊 -->
+<section class="my-5">
+    <h2 class="text-center mb-5">我們的特色</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 p-3 text-center">
+                <div class="card-body">
+                    <i class="fas fa-map-marked-alt fa-3x text-primary mb-3"></i>
+                    <h4>互動地圖</h4>
+                    <p class="text-muted">透過地圖輕鬆找到附近的餐廳，查看位置與距離</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-3 text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-pie fa-3x text-primary mb-3"></i>
+                    <h4>食物分析</h4>
+                    <p class="text-muted">了解菜單的營養成分、熱量與健康資訊</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-3 text-center">
+                <div class="card-body">
+                    <i class="fas fa-utensils fa-3x text-primary mb-3"></i>
+                    <h4>飲食建議</h4>
+                    <p class="text-muted">根據過敏原和飲食偏好獲取個人化的菜單推薦</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5">
+    <h2 class="text-center mb-4">打卡足跡檢索</h2>
+    <div id="mainMap"></div>
+    <div id="map-status" class="text-center mt-2" style="display: none;">
+        <div class="alert alert-info">正在載入地圖...</div>
+    </div>
+</section>
+
+<script>
+// 顯示載入狀態
+document.getElementById('map-status').style.display = 'block';
+
+function initMap() {
+  console.log("開始初始化地圖...");
+  
+  try {
+    const map = new google.maps.Map(document.getElementById("mainMap"), {
+      center: { lat: 24.968, lng: 121.193 },
+      zoom: 16,
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
+    });
+
+    console.log("地圖創建成功");
+    
+    // 隱藏載入狀態
+    document.getElementById('map-status').style.display = 'none';
+
+    // 處理重疊標記的函數
+    function adjustOverlappingMarkers(markers) {
+      const locationMap = new Map();
+      
+      markers.forEach(marker => {
+        const key = `${marker.getPosition().lat()},${marker.getPosition().lng()}`;
+        if (!locationMap.has(key)) {
+          locationMap.set(key, []);
+        }
+        locationMap.get(key).push(marker);
+      });
+
+      locationMap.forEach(markersAtLocation => {
+        if (markersAtLocation.length > 1) {
+          const radius = 0.0001; // 增加偏移距離
+          markersAtLocation.forEach((marker, index) => {
+            if (index > 0) {
+              const angle = (2 * Math.PI * index) / markersAtLocation.length;
+              const newLat = marker.getPosition().lat() + radius * Math.cos(angle);
+              const newLng = marker.getPosition().lng() + radius * Math.sin(angle);
+              marker.setPosition(new google.maps.LatLng(newLat, newLng));
+            }
+          });
+        }
+      });
+    }
+
+    // 抓取打卡資料並加上 Marker
+    console.log("開始載入打卡數據...");
+    fetch('/checkin/json')
+      .then(response => {
+        console.log("API回應狀態:", response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log("收到打卡數據:", data.length, "筆記錄");
+        
+        if (!Array.isArray(data)) {
+          console.error("API返回的數據格式不正確:", data);
+          return;
+        }
+        
+        const infoWindow = new google.maps.InfoWindow();
+        const markers = [];
+        
+        data.forEach(checkin => {
+          // 驗證數據完整性
+          if (!checkin.latitude || !checkin.longitude) {
+            console.warn("跳過無效的打卡數據:", checkin);
+            return;
+          }
+          
+          // 根據是否為當前用戶選擇不同的圖標
+          const iconUrl = checkin.is_current_user 
+            ? "{% static 'images/logo.png' %}"
+            : "{% static 'images/logo2.png' %}";
+
+          const marker = new google.maps.Marker({
+            position: {
+              lat: parseFloat(checkin.latitude),
+              lng: parseFloat(checkin.longitude),
+            },
+            map: map,
+            title: checkin.restaurant_name || '未知餐廳',
+            icon: {
+              url: iconUrl,
+              scaledSize: new google.maps.Size(40, 40), // 稍微縮小圖標
+            }
+          });
+
+          // 點擊 Marker 顯示資訊視窗
+          marker.addListener("click", () => {
+            const rating = parseFloat(checkin.rating) || 0;
+            const stars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+            
+            const content = `
+              <div class="map-info-window" style="padding: 15px; max-width: 300px;">
+                <h5 style="margin: 0 0 10px 0; color: #333;">${checkin.restaurant_name || '未知餐廳'}</h5>
+                <div style="margin-bottom: 8px;">
+                  <span style="color: #666;">
+                    <i class="fas fa-user"></i> ${checkin.is_current_user ? '我' : (checkin.user_name || '匿名用戶')}
+                  </span>
+                  <span style="margin-left: 10px; color: #666;">
+                    <i class="fas fa-calendar"></i> ${checkin.date || '未知日期'}
+                  </span>
+                </div>
+                <div style="margin-bottom: 8px; color: #ff9800;">
+                  ${stars} ${rating.toFixed(1)}
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <strong style="color: #4CAF50;">$ ${checkin.price || '未知價格'}</strong>
+                  <span style="margin-left: 10px;">${checkin.item || '未知項目'}</span>
+                </div>
+                <p style="margin: 0; color: #666; font-style: italic;">
+                  "${checkin.comment || '無評論'}"
+                </p>
+              </div>`;
+              
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+          });
+
+          markers.push(marker);
+        });
+
+        if (markers.length === 0) {
+          console.log("沒有有效的打卡數據可顯示");
+          // 顯示提示訊息
+          document.getElementById('map-status').innerHTML = '<div class="alert alert-info">目前沒有打卡記錄可顯示</div>';
+          document.getElementById('map-status').style.display = 'block';
+          return;
+        }
+
+        console.log("成功創建", markers.length, "個標記");
+        
+        // 處理重疊的標記
+        adjustOverlappingMarkers(markers);
+        
+        // 調整地圖視野以包含所有標記
+        if (markers.length > 1) {
+          const bounds = new google.maps.LatLngBounds();
+          markers.forEach(marker => bounds.extend(marker.getPosition()));
+          map.fitBounds(bounds);
+        }
+      })
+      .catch(error => {
+        console.error("載入打卡資料失敗:", error);
+        document.getElementById('map-status').innerHTML = 
+          '<div class="alert alert-warning">載入打卡資料失敗，請重新整理頁面</div>';
+        document.getElementById('map-status').style.display = 'block';
+      });
+      
+  } catch (error) {
+    console.error("地圖初始化失敗:", error);
+    document.getElementById('map-status').innerHTML = 
+      '<div class="alert alert-danger">地圖初始化失敗</div>';
+    document.getElementById('map-status').style.display = 'block';
+  }
+}
+
+// 確保在Google Maps API載入失敗時有適當的錯誤處理
+window.gm_authFailure = function() {
+  console.error("Google Maps API 認證失敗");
+  document.getElementById("mainMap").innerHTML = 
+    '<div class="alert alert-warning text-center">地圖載入失敗，請檢查API金鑰設定</div>';
+  document.getElementById('map-status').style.display = 'none';
+};
+
+// 檢查Google Maps API是否載入
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (typeof google === 'undefined') {
+      console.error("Google Maps API 未載入");
+      document.getElementById('map-status').innerHTML = 
+        '<div class="alert alert-warning">Google Maps API 載入失敗</div>';
+    }
+  }, 5000);
+});
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+
+{% endblock %} 
