@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}聊天室 - NCU 食物地圖{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-room-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .chat-room-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left-color: #007bff;
+    }
+    
+    .unread-badge {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .last-message {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .chat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .create-chat-btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 30px;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .create-chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-comments me-2"></i>聊天室</h2>
+                <button class="btn create-chat-btn" data-bs-toggle="modal" data-bs-target="#createChatModal">
+                    <i class="fas fa-plus me-2"></i>創建聊天室
+                </button>
+            </div>
+            
+            {% if chat_rooms %}
+                <div class="row">
+                    {% for room in chat_rooms %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card chat-room-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="chat-avatar me-3">
+                                        {% if room.room_type == 'private' %}
+                                            <i class="fas fa-user"></i>
+                                        {% else %}
+                                            <i class="fas fa-users"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title mb-1">{{ room }}</h6>
+                                        <small class="text-muted">
+                                            {{ room.participants.count }} 位成員
+                                        </small>
+                                    </div>
+                                    {% if room.unread_count > 0 %}
+                                        <span class="badge unread-badge">{{ room.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if room.last_message %}
+                                    <div class="last-message mb-3">
+                                        <strong>{{ room.last_message.sender.username }}:</strong>
+                                        {% if room.last_message.content %}
+                                            {{ room.last_message.content|truncatechars:50 }}
+                                        {% elif room.last_message.image %}
+                                            <i class="fas fa-image me-1"></i>圖片
+                                        {% elif room.last_message.file %}
+                                            <i class="fas fa-file me-1"></i>檔案
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">{{ room.last_message.created_at|timesince }}前</small>
+                                    </div>
+                                {% else %}
+                                    <div class="last-message mb-3">
+                                        <em class="text-muted">還沒有訊息</em>
+                                    </div>
+                                {% endif %}
+                                
+                                <a href="{% url 'social:chat_room' room.id %}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-comment me-1"></i>進入聊天室
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">還沒有聊天室</h4>
+                    <p class="text-muted">開始與好友聊天吧！</p>
+                    <button class="btn create-chat-btn" data-bs-toggle="modal" data-bs-target="#createChatModal">
+                        <i class="fas fa-plus me-2"></i>創建第一個聊天室
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 創建聊天室模態框 -->
+<div class="modal fade" id="createChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>創建聊天室
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'social:create_chat_room' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ create_form.name.id_for_label }}" class="form-label">聊天室名稱</label>
+                        {{ create_form.name }}
+                        <div class="form-text">私人聊天可以不填寫名稱</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ create_form.room_type.id_for_label }}" class="form-label">聊天室類型</label>
+                        {{ create_form.room_type }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">邀請好友</label>
+                        {% if create_form.participants.field.queryset %}
+                            <div class="row">
+                                {% for choice in create_form.participants %}
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            {{ choice.tag }}
+                                            <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                {{ choice.choice_label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">你還沒有好友，先去添加一些好友吧！</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>創建聊天室
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
